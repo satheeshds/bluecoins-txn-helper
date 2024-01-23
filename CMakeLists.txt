@@ -25,9 +25,9 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(CLI11)
 
 include_directories(./include)
-include_directories(/usr/local/include)
+# include_directories(/usr/local/include)
 # link_directories(lib/BasicExcel)
-find_library(LIBXLSREADER_LIBRARY NAMES xlsreader PATHS /usr/local/lib)
+find_library(LIBXLSREADER_LIBRARY NAMES xlsreader PATHS ./lib)
 if(NOT LIBXLSREADER_LIBRARY)
     message(FATAL_ERROR "libxlsreader not found")
 endif()
