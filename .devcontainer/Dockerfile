@@ -2,6 +2,13 @@ FROM mcr.microsoft.com/devcontainers/cpp:1-debian-12
 
 ARG REINSTALL_CMAKE_VERSION_FROM_SOURCE="3.22.2"
 
+#RUN apt-get update && apt-get install -y curl
+
+# Download the release
+RUN curl -LJO "https://github.com/libxls/libxls/releases/download/v1.6.2/libxls-1.6.2.tar.gz" && tar -xzf libxls-1.6.2.tar.gz
+
+RUN chmod +x /libxls-1.6.2/configure && /libxls-1.6.2/configure && make && make install
+
 # Optionally install the cmake for vcpkg
 COPY ./reinstall-cmake.sh /tmp/
 

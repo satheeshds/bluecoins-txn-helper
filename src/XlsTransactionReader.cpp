@@ -3,6 +3,7 @@
 #include <xls.h>
 #include <stdexcept>
 #include <iostream>
+#include "globals.h"
 using namespace xls;
 
 class XlsTransactionReader : public IXlsTransactionReader
@@ -46,7 +47,7 @@ public:
             throw std::runtime_error("Workbook is not opened");
         }
 
-        std::cout << "Number of sheets: " << wb->sheets.count << std::endl;
+        if(isVerbose) std::cout << "Number of sheets: " << wb->sheets.count << std::endl;
         std::vector<Transaction> transactions;
 
         for (int i = 0; i < wb->sheets.count; i++)
@@ -59,22 +60,22 @@ public:
                 exit(1);
             }
 
-            printf("Sheet: %s\n", ws->workbook->sheets.sheet[i].name);
-            printf("  Max col: %d\n", ws->rows.lastcol);
-            printf("  Max row: %d\n", ws->rows.lastrow);
+            if(isVerbose) printf("Sheet: %s\n", ws->workbook->sheets.sheet[i].name);
+            if(isVerbose) printf("  Max col: %d\n", ws->rows.lastcol);
+            if(isVerbose) printf("  Max row: %d\n", ws->rows.lastrow);
 
             // transaction header starts from row 19
             for (int row = 20; row <= ws->rows.lastrow; row++)
             {
                 Transaction transaction;
-                printf("  Row %d\n", row);
+                if(isVerbose) printf("  Row %d\n", row);
                 for (int col = 0; col <= ws->rows.lastcol; col++)
                 {
-                    printf("    Col %d\n", col);
+                    if(isVerbose) printf("    Col %d\n", col);
                     xlsCell *cell = xls_cell(ws, row, col);
                     if (cell == NULL)
                     {
-                        printf("Error reading cell: %s\n", xls_getError(error));
+                        if(isVerbose) printf("Error reading cell: %s\n", xls_getError(error));
                         exit(1);
                     }
 
@@ -102,6 +103,6 @@ public:
         }
 
         // Implement this method
-        return std::vector<Transaction>();
+        return transactions;
     }
 };

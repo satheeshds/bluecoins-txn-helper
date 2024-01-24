@@ -25,17 +25,15 @@ FetchContent_Declare(
 FetchContent_MakeAvailable(CLI11)
 
 include_directories(./include)
-# include_directories(/usr/local/include)
+include_directories(/usr/local/include)
 # link_directories(lib/BasicExcel)
-find_library(LIBXLSREADER_LIBRARY NAMES xlsreader PATHS ./lib)
+find_library(LIBXLSREADER_LIBRARY NAMES xlsreader PATHS /usr/local/lib)
 if(NOT LIBXLSREADER_LIBRARY)
     message(FATAL_ERROR "libxlsreader not found")
 endif()
 
 
-
-
 # find_package(libxls REQUIRED)
-add_executable(${PROJECT_NAME} src/main.cpp src/BasicExcel.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp src/BasicExcel.cpp src/globals.cpp)
 
 target_link_libraries(${PROJECT_NAME} CLI11::CLI11 ${LIBXLSREADER_LIBRARY} )
