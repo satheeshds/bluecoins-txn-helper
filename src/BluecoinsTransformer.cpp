@@ -1,5 +1,6 @@
 #include "../include/ITransactionTransformer.hpp"
 #include <vector>
+#include <iostream>
 
 class BluecoinsTransformer : public ITransactionTransformer
 {
@@ -28,6 +29,8 @@ public:
             bluecoins_transaction.split = "";
 
             std::cout << bluecoins_transaction << std::endl;
+            std::cin >> bluecoins_transaction;
+            std::cout << bluecoins_transaction << std::endl;
 
             bluecoins_transactions.push_back(bluecoins_transaction);
         }
@@ -38,16 +41,28 @@ public:
 
 std::istream &operator>>(std::istream &is, BluecoinsTransaction &transaction)
 {
-    is >> transaction.item_or_payee;
+    std::cout << "Enter item or payee (default: " << transaction.item_or_payee << "): ";
+    std::string input;
+    std::getline(is, input);
+    if (!input.empty())
+    {
+        transaction.item_or_payee = input;
+    }
+    std::cout << "Enter category: ";
+    std::getline(is, transaction.category);
     // Add more fields if needed
     return is;
 }
 
 std::ostream &operator<<(std::ostream &os, const BluecoinsTransaction &transaction)
 {
+    char dateStr[100];
+    strftime(dateStr, sizeof(dateStr), "%Y-%m-%d %H:%M:%S", &transaction.date);
     os << "Type: " << transaction.type << "\n"
-       << "Date: " << transaction.date << "\n"
+       << "Date: " << dateStr << "\n"
        << "Item or Payee: " << transaction.item_or_payee << "\n"
+       << "Parent Category: " << transaction.parent_category << "\n"
+       << "Category: " << transaction.category << "\n"
        << "Amount: " << transaction.amount << "\n"
        << "Account: " << transaction.account << "\n";
     // Add more fields if needed

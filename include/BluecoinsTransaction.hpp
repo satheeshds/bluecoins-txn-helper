@@ -5,7 +5,7 @@
 struct BluecoinsTransaction
 {
     char type;
-    std::string date;
+    tm date;
     std::string item_or_payee;
     double amount;
     std::string parent_category;
