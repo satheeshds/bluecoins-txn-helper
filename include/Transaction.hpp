@@ -22,4 +22,5 @@ struct Transaction
     std::string account;
     TransactionType type;
 };
+std::ostream &operator<<(std::ostream &os, const Transaction &transaction);
 #endif // TRANSACTION_HPP

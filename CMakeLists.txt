@@ -10,6 +10,12 @@ FetchContent_Declare(
     GIT_TAG v2.3.2
 )
 
+FetchContent_Declare(
+  SQLiteCpp
+  GIT_REPOSITORY https://github.com/SRombauts/SQLiteCpp.git
+  GIT_TAG origin/master
+)
+
 # FetchContent_Declare(
 #     OpenXLSX
 #     GIT_REPOSITORY https://github.com/troldal/OpenXLSX.git
@@ -22,7 +28,7 @@ FetchContent_Declare(
 #     GIT_BRANCH master
 # )
 
-FetchContent_MakeAvailable(CLI11)
+FetchContent_MakeAvailable(CLI11 SQLiteCpp)
 
 include_directories(./include)
 include_directories(/usr/local/include)
@@ -34,6 +40,6 @@ endif()
 
 
 # find_package(libxls REQUIRED)
-add_executable(${PROJECT_NAME} src/main.cpp src/BasicExcel.cpp src/globals.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp src/globals.cpp src/db.cpp)
 
-target_link_libraries(${PROJECT_NAME} CLI11::CLI11 ${LIBXLSREADER_LIBRARY} )
+target_link_libraries(${PROJECT_NAME} CLI11::CLI11 ${LIBXLSREADER_LIBRARY} SQLiteCpp)
