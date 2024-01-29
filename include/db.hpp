@@ -12,6 +12,14 @@ struct Category
     std::string parent_category;
 };
 
+struct Item
+{
+    std::string name;
+    std::string category;
+    std::string parent_category;
+    std::string label;
+};
+
 class db
 {
 private:
@@ -21,6 +29,7 @@ public:
     db(const std::string &dbPath);
     ~db();
     std::vector<Category> getCategories();
+    std::vector<Item> getItems(std::string prefix);
 };
 
 #endif // DB_HPP

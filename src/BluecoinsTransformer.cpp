@@ -5,6 +5,7 @@
 #include <string>
 #include <filesystem>
 #include "../include/db.hpp"
+#include <ncurses.h>
 
 class BluecoinsTransformer : public ITransactionTransformer
 {
@@ -19,6 +20,68 @@ private:
             lastWord.erase(found, 2);
         }
         return lastWord;
+    }
+
+    Item getSelectedItem(const std::string &description)
+    {
+        auto items = this->m_db->getItems(description);
+        items.push_back(Item{"Exit", "None", "None", "None"});
+        initscr();
+        noecho();
+        cbreak();
+
+        keypad(stdscr, TRUE);
+        printw("Select an item:\n");
+        printw("Use arrow keys to go up and down, press enter to select an item\n");
+        printw("Item\t| Category\t| Parent Category\t| Label\n");
+        int choice;
+        int highlight = 0;
+        while (1)
+        {
+            clear();
+            for (int i = 0; i < items.size(); i++)
+            {
+                if (i == highlight)
+                {
+                    wattron(stdscr, A_REVERSE);
+                }
+                printw("%s\t| %s\t| %s\t| %s\n ", items[i].name.c_str(), items[i].category.c_str(), items[i].parent_category.c_str(), items[i].label.c_str());
+                if (i == highlight)
+                {
+                    wattroff(stdscr, A_REVERSE);
+                }
+            }
+
+            // Wait for the user to press a key
+            choice = getch();
+
+            switch (choice)
+            {
+            case KEY_UP:
+                highlight--;
+                if (highlight == -1)
+                {
+                    highlight = 0;
+                }
+                break;
+            case KEY_DOWN:
+                highlight++;
+                if (highlight == items.size())
+                {
+                    highlight = items.size() - 1;
+                }
+                break;
+            case 10:
+                endwin();
+                return items[highlight];
+                break;
+            }
+            /* code */
+        }
+        refresh();
+
+        // End ncurses mode
+        // endwin();
     }
 
     db *m_db;
@@ -51,23 +114,28 @@ public:
                 continue;
             }
 
-            for (const auto &c : categories)
-            {
-                std::cout << "Category: " << c.name << std::endl;
-                std::cout << "Parent Category: " << c.parent_category << std::endl;
+            // for (const auto &c : categories)
+            // {
+            //     std::cout << "Category: " << c.name << std::endl;
+            //     std::cout << "Parent Category: " << c.parent_category << std::endl;
+            // }
+
+            Item selectedItem = getSelectedItem(cleanDescription(t.description));
+            if(selectedItem.name == "Exit") {
+                selectedItem = Item{cleanDescription(t.description), "", "", ""};
             }
 
             BluecoinsTransaction bluecoins_transaction;
             bluecoins_transaction.type = t.type == TransactionType::DEBIT ? 'e' : 'i';
             bluecoins_transaction.date = t.date;
-            bluecoins_transaction.item_or_payee = cleanDescription(t.description);
+            bluecoins_transaction.item_or_payee = selectedItem.name;
             bluecoins_transaction.amount = t.amount;
-            bluecoins_transaction.parent_category = "";
-            bluecoins_transaction.category = "";
+            bluecoins_transaction.parent_category = selectedItem.parent_category;
+            bluecoins_transaction.category = selectedItem.category;
             bluecoins_transaction.account_type = "Bank";
             bluecoins_transaction.account = t.account;
             bluecoins_transaction.notes = "";
-            bluecoins_transaction.labels = "";
+            bluecoins_transaction.labels = selectedItem.label;
             bluecoins_transaction.status = "";
             bluecoins_transaction.split = "";
 
@@ -96,16 +164,28 @@ std::istream &operator>>(std::istream &is, BluecoinsTransaction &transaction)
         transaction.item_or_payee = input;
     }
 
-    std::cout << "Enter category: ";
-    std::getline(is, transaction.category);
+    std::cout << "Enter category (default: " << transaction.category << "): ";
+    std::getline(is, input);
+    if (!input.empty())
+    {
+        transaction.category = input;
+    }
 
-    std::cout << "Enter parent category: ";
-    std::getline(is, transaction.parent_category);
+    std::cout << "Enter parent category (default:" << transaction.parent_category << "): ";
+    std::getline(is, input);
+    if (!input.empty())
+    {
+        transaction.parent_category = input;
+    }
 
     std::cout << "Amount :" << transaction.amount << std::endl;
     std::cout << "Account :" << transaction.account << std::endl;
-    std::cout << "Enter label: ";
-    std::getline(is, transaction.labels);
+    std::cout << "Enter label (default: " << transaction.labels << "): ";
+    std::getline(is, input);
+    if (!input.empty())
+    {
+        transaction.labels = input;
+    }
 
     // Add more fields if needed
     return is;

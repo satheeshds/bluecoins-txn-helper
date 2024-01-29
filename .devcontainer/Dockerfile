@@ -2,7 +2,10 @@ FROM mcr.microsoft.com/devcontainers/cpp:1-debian-12
 
 ARG REINSTALL_CMAKE_VERSION_FROM_SOURCE="3.22.2"
 
-#RUN apt-get update && apt-get install -y curl
+RUN apt-get update
+
+# Install SQLite3
+RUN apt-get install -y sqlite3
 
 # Download the release
 RUN curl -LJO "https://github.com/libxls/libxls/releases/download/v1.6.2/libxls-1.6.2.tar.gz" && tar -xzf libxls-1.6.2.tar.gz
