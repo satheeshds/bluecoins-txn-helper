@@ -55,7 +55,7 @@ std::ostream &operator<<(std::ostream &os, const BluecoinsTransaction &transacti
        << quoteIfNeeded(transaction.notes) << ","
        << quoteIfNeeded(transaction.labels) << ","
        << transaction.status << ","
-       << transaction.split << std::endl;
+       << transaction.split;
     // Add more fields if needed
     return os;
 }

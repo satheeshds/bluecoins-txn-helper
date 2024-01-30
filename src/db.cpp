@@ -1,5 +1,7 @@
 #include <SQLiteCpp/SQLiteCpp.h>
 #include <vector>
+#include <algorithm>
+#include <cctype>
 #include <string>
 #include "../include/db.hpp"
 
@@ -30,13 +32,15 @@ std::vector<Category> db::getCategories()
     return categories;
 }
 
-std::vector<Item> db::getItems(std::string prefix) {
+std::vector<Item> db::getItems(std::string prefix)
+{
     std::string queryStr = "select distinct it.itemName, cct.childCategoryName, pct.parentCategoryName, lt.labelName \
                             from itemtable it inner join transactionstable tt on tt.itemID = it.itemTableID \
                             inner join childcategorytable cct on tt.categoryID = cct.categoryTableID \
                             inner join parentcategorytable pct on cct.parentCategoryID = pct.parentCategoryTableID \
                             inner join labelstable lt on tt.transactionstableid = lt.transactionidlabels \
                             where it.itemName like ?;";
+
     SQLite::Statement query(*database, queryStr);
     query.bind(1, prefix + "%");
 
@@ -48,8 +52,28 @@ std::vector<Item> db::getItems(std::string prefix) {
         item.category = query.getColumn(1).getString();
         item.parent_category = query.getColumn(2).getString();
         item.label = query.getColumn(3).getString();
+        item.label.erase(std::remove_if(item.label.begin(), item.label.end(), ::isspace), item.label.end());
         items.push_back(item);
     }
 
     return items;
+}
+
+std::vector<Account> db::getAccounts(std::string prefix)
+{
+    SQLite::Statement query(*database, "select at.accountName, att.accountTypeName \
+                                        from accountstable at inner join accounttypetable att on at.accounttypeid = att.accounttypetableid \
+                                        where at.accountName like ?;");
+
+    query.bind(1, "%" + prefix + "%");
+    std::vector<Account> accounts;
+    while (query.executeStep())
+    {
+        Account account;
+        account.name = query.getColumn(0).getString();
+        account.type = query.getColumn(1).getString();
+        accounts.push_back(account);
+    }
+
+    return accounts;
 }

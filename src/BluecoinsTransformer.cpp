@@ -1,11 +1,95 @@
 #include "../include/ITransactionTransformer.hpp"
+#include "../include/db.hpp"
 #include <vector>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <filesystem>
-#include "../include/db.hpp"
+#include <functional>
 #include <ncurses.h>
+
+template <typename T>
+
+T printAndHighlightChoices(const std::string title, std::function<std::vector<T>(std::string)> getItems, std::string input)
+{
+    initscr();
+    noecho();
+    cbreak();
+
+    keypad(stdscr, TRUE);
+
+    int choice;
+    int highlight = 0;
+    auto choices = getItems(input);
+    while (1)
+    {
+        clear();
+        printw("%s\n", title.c_str());
+        printw("Existing details for: %s\n", input.c_str());
+        for (int i = 0; i < choices.size(); i++)
+        {
+            if (i == highlight)
+            {
+                wattron(stdscr, A_REVERSE);
+            }
+            printw("%s\n", choices[i].toString().c_str());
+            if (i == highlight)
+            {
+                wattroff(stdscr, A_REVERSE);
+            }
+        }
+
+        // Move the cursor to the input
+        move(1, strlen("Existing details for: ") + input.length());
+
+        // Wait for the user to press a key
+        choice = getch();
+
+        switch (choice)
+        {
+        case KEY_UP:
+            highlight--;
+            if (highlight == -1)
+            {
+                highlight = 0;
+            }
+            break;
+        case KEY_DOWN:
+            highlight++;
+            if (highlight == choices.size())
+            {
+                highlight = choices.size() - 1;
+            }
+            break;
+        case 27: // Escape key
+            endwin();
+            return T{};
+        case 10: // Enter key
+            endwin();
+            return choices[highlight];
+        case KEY_BACKSPACE:
+            if (input.empty())
+                break;
+
+            input.pop_back();
+            if (input.empty())
+                break;
+
+            choices = getItems(input);
+            highlight = 0;
+            break;
+        default:
+            if (isprint(choice))
+            {
+                input += choice;
+                choices = getItems(input);
+                highlight = 0;
+            }
+            break;
+        }
+        refresh();
+    }
+}
 
 class BluecoinsTransformer : public ITransactionTransformer
 {
@@ -22,66 +106,21 @@ private:
         return lastWord;
     }
 
+    Account getSelectedAccount(std::string input)
+    {
+        return printAndHighlightChoices<Account>(
+            "Select account", [this](std::string input)
+            { return this->m_db->getAccounts(input); },
+            input);
+    }
+
     Item getSelectedItem(const std::string &description)
     {
-        auto items = this->m_db->getItems(description);
-        items.push_back(Item{"Exit", "None", "None", "None"});
-        initscr();
-        noecho();
-        cbreak();
-
-        keypad(stdscr, TRUE);
-        printw("Select an item:\n");
-        printw("Use arrow keys to go up and down, press enter to select an item\n");
-        printw("Item\t| Category\t| Parent Category\t| Label\n");
-        int choice;
-        int highlight = 0;
-        while (1)
-        {
-            clear();
-            for (int i = 0; i < items.size(); i++)
-            {
-                if (i == highlight)
-                {
-                    wattron(stdscr, A_REVERSE);
-                }
-                printw("%s\t| %s\t| %s\t| %s\n ", items[i].name.c_str(), items[i].category.c_str(), items[i].parent_category.c_str(), items[i].label.c_str());
-                if (i == highlight)
-                {
-                    wattroff(stdscr, A_REVERSE);
-                }
-            }
-
-            // Wait for the user to press a key
-            choice = getch();
-
-            switch (choice)
-            {
-            case KEY_UP:
-                highlight--;
-                if (highlight == -1)
-                {
-                    highlight = 0;
-                }
-                break;
-            case KEY_DOWN:
-                highlight++;
-                if (highlight == items.size())
-                {
-                    highlight = items.size() - 1;
-                }
-                break;
-            case 10:
-                endwin();
-                return items[highlight];
-                break;
-            }
-            /* code */
-        }
-        refresh();
-
-        // End ncurses mode
-        // endwin();
+        std::string input = cleanDescription(description);
+        return printAndHighlightChoices<Item>(
+            "Transaction description: " + description, [this](std::string input)
+            { return this->m_db->getItems(input); },
+            input);
     }
 
     db *m_db;
@@ -114,32 +153,60 @@ public:
                 continue;
             }
 
-            // for (const auto &c : categories)
-            // {
-            //     std::cout << "Category: " << c.name << std::endl;
-            //     std::cout << "Parent Category: " << c.parent_category << std::endl;
-            // }
-
-            Item selectedItem = getSelectedItem(cleanDescription(t.description));
-            if(selectedItem.name == "Exit") {
-                selectedItem = Item{cleanDescription(t.description), "", "", ""};
-            }
+            Item selectedItem = getSelectedItem(t.description);
 
             BluecoinsTransaction bluecoins_transaction;
             bluecoins_transaction.type = t.type == TransactionType::DEBIT ? 'e' : 'i';
             bluecoins_transaction.date = t.date;
-            bluecoins_transaction.item_or_payee = selectedItem.name;
             bluecoins_transaction.amount = t.amount;
-            bluecoins_transaction.parent_category = selectedItem.parent_category;
-            bluecoins_transaction.category = selectedItem.category;
             bluecoins_transaction.account_type = "Bank";
             bluecoins_transaction.account = t.account;
             bluecoins_transaction.notes = "";
-            bluecoins_transaction.labels = selectedItem.label;
             bluecoins_transaction.status = "";
             bluecoins_transaction.split = "";
 
-            std::cin >> bluecoins_transaction;
+            if (selectedItem.name == "")
+            {
+                bluecoins_transaction.item_or_payee = cleanDescription(t.description);
+                std::cin >> bluecoins_transaction;
+            }
+            else
+            {
+                bluecoins_transaction.item_or_payee = selectedItem.name;
+                bluecoins_transaction.parent_category = selectedItem.parent_category;
+                bluecoins_transaction.category = selectedItem.category;
+                bluecoins_transaction.labels = selectedItem.label;
+            }
+
+            if (selectedItem.parent_category == "(Transfer)")
+            {
+                BluecoinsTransaction transfer_transaction;
+                transfer_transaction.type = 't';
+                bluecoins_transaction.type = 't';
+                transfer_transaction.date = t.date;
+                transfer_transaction.amount = t.amount;
+                transfer_transaction.item_or_payee = selectedItem.name;
+                transfer_transaction.parent_category = selectedItem.parent_category;
+                transfer_transaction.category = selectedItem.category;
+                transfer_transaction.labels = selectedItem.label;
+                auto selectedAccount = getSelectedAccount("");
+                transfer_transaction.account_type = selectedAccount.type;
+                transfer_transaction.account = selectedAccount.name;
+
+                if (t.type == TransactionType::DEBIT)
+                {
+                    bluecoins_transaction.amount = -t.amount;
+                    bluecoins_transactions.push_back(bluecoins_transaction);
+                    bluecoins_transactions.push_back(transfer_transaction);
+                }
+                else
+                {
+                    transfer_transaction.amount = -t.amount;
+                    bluecoins_transactions.push_back(transfer_transaction);
+                    bluecoins_transactions.push_back(bluecoins_transaction);
+                }
+                continue;
+            }
 
             bluecoins_transactions.push_back(bluecoins_transaction);
         }

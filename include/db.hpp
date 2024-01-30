@@ -5,6 +5,11 @@
 #include <vector>
 #include <SQLiteCpp/SQLiteCpp.h>
 
+struct IStringable
+{
+    virtual std::string toString() const = 0; // Pure virtual function
+};
+
 struct Category
 {
     int id;
@@ -12,12 +17,26 @@ struct Category
     std::string parent_category;
 };
 
-struct Item
+struct Account : public IStringable
+{
+    std::string name;
+    std::string type;
+    std::string toString() const override
+    {
+        return name + "|" + type;
+    }
+};
+
+struct Item : public IStringable
 {
     std::string name;
     std::string category;
     std::string parent_category;
     std::string label;
+    std::string toString() const override
+    {
+        return name + "|" + category + "|" + parent_category + "|" + label;
+    }
 };
 
 class db
@@ -30,6 +49,7 @@ public:
     ~db();
     std::vector<Category> getCategories();
     std::vector<Item> getItems(std::string prefix);
+    std::vector<Account> getAccounts(std::string prefix = "");
 };
 
 #endif // DB_HPP

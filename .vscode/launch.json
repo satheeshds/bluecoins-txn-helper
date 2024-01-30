@@ -8,7 +8,9 @@
             "program": "${command:cmake.launchTargetPath}",
             "args": [
                 "-f",
-                "/home/satheesh/test.xls"
+                "test2.xls",
+                "-d",
+                "bluecoins.fydb"
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
