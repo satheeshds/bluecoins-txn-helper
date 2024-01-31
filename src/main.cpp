@@ -2,7 +2,7 @@
 #include "../include/IXlsTransactionReader.hpp"
 #include "../include/ITransactionTransformer.hpp"
 #include "../include/IBluecoinsTransactionWriter.hpp"
-#include "XlsTransactionReader.cpp"
+#include "FileTransactionReader.cpp"
 #include "BluecoinsTransformer.cpp"
 #include "BluecoinsCsvWriter.cpp"
 #include "../include/globals.h"
@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 
     if (isVerbose)
         std::cout << "reading xls" << std::endl;
-    IXlsTransactionReader *reader = new XlsTransactionReader(xls_file);
+    IXlsTransactionReader *reader = new FileTransactionReader(xls_file);
     reader->open();
     auto transactions = reader->getTransactions();
     reader->close();

@@ -33,16 +33,8 @@ FetchContent_MakeAvailable(CLI11 SQLiteCpp)
 find_package(Curses REQUIRED)
 
 include_directories(./include)
-include_directories(/usr/local/include)
 include_directories(${CURSES_INCLUDE_DIR})
-# link_directories(lib/BasicExcel)
-find_library(LIBXLSREADER_LIBRARY NAMES xlsreader PATHS /usr/local/lib)
-if(NOT LIBXLSREADER_LIBRARY)
-    message(FATAL_ERROR "libxlsreader not found")
-endif()
 
-
-# find_package(libxls REQUIRED)
 add_executable(${PROJECT_NAME} src/main.cpp src/globals.cpp src/db.cpp)
 
-target_link_libraries(${PROJECT_NAME} CLI11::CLI11 ${LIBXLSREADER_LIBRARY} SQLiteCpp ${CURSES_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} CLI11::CLI11 SQLiteCpp ${CURSES_LIBRARIES})
