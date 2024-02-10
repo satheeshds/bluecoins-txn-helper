@@ -35,6 +35,6 @@ find_package(Curses REQUIRED)
 include_directories(./include)
 include_directories(${CURSES_INCLUDE_DIR})
 
-add_executable(${PROJECT_NAME} src/main.cpp src/globals.cpp src/db.cpp)
+add_executable(${PROJECT_NAME} src/main.cpp src/globals.cpp src/db.cpp src/helper.cpp)
 
 target_link_libraries(${PROJECT_NAME} CLI11::CLI11 SQLiteCpp ${CURSES_LIBRARIES})

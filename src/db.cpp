@@ -34,11 +34,11 @@ std::vector<Category> db::getCategories()
 
 std::vector<Item> db::getItems(std::string prefix)
 {
-    std::string queryStr = "select distinct it.itemName, cct.childCategoryName, pct.parentCategoryName, lt.labelName \
+    std::string queryStr = "select distinct it.itemName, cct.childCategoryName, pct.parentCategoryName, \
+                            (SELECT GROUP_CONCAT(lt.labelname) FROM labelstable lt WHERE lt.transactionidlabels = tt.transactionstableid) as labels \
                             from itemtable it inner join transactionstable tt on tt.itemID = it.itemTableID \
                             inner join childcategorytable cct on tt.categoryID = cct.categoryTableID \
                             inner join parentcategorytable pct on cct.parentCategoryID = pct.parentCategoryTableID \
-                            inner join labelstable lt on tt.transactionstableid = lt.transactionidlabels \
                             where it.itemName like ?;";
 
     SQLite::Statement query(*database, queryStr);

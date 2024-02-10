@@ -27,6 +27,22 @@ struct Account : public IStringable
     }
 };
 
+struct Label : public IStringable
+{
+    std::string name;
+    std::string toString() const override
+    {
+        return name;
+    }
+    bool operator==(const Label &other) const
+    {
+        return name == other.name;
+    }
+    // constructor that takes a std::string
+    Label(const std::string &name) : name(name) {}
+    Label() {}
+};
+
 struct Item : public IStringable
 {
     std::string name;

@@ -1,5 +1,6 @@
 #include "../include/ITransactionTransformer.hpp"
 #include "../include/db.hpp"
+#include "../include/helper.hpp"
 #include <vector>
 #include <iostream>
 #include <sstream>
@@ -91,6 +92,7 @@ T printAndHighlightChoices(const std::string title, std::function<std::vector<T>
     }
 }
 
+const std::vector<Label> spliwiseLabels = {{"NotSplit"}, {"SplitEqual"}, {"SplitUnequal"}};
 class BluecoinsTransformer : public ITransactionTransformer
 {
 private:
@@ -121,6 +123,14 @@ private:
             "Transaction description: " + description, [this](std::string input)
             { return this->m_db->getItems(input); },
             input);
+    }
+
+    Label getSplitWiseLabel(const Transaction &t)
+    {
+        return printAndHighlightChoices<Label>(
+            "Select Splitwise label", [this](std::string input)
+            { return spliwiseLabels; },
+            cleanDescription(t.description));
     }
 
     db *m_db;
@@ -208,6 +218,21 @@ public:
                 continue;
             }
 
+            auto existingLabels = split(bluecoins_transaction.labels, ',');
+            for (auto &label : existingLabels)
+            {
+                Label labelStruct = {label};
+                if (std::find(spliwiseLabels.begin(), spliwiseLabels.end(), labelStruct) != spliwiseLabels.end())
+                {
+                    auto it = std::remove(existingLabels.begin(), existingLabels.end(), label);
+                    existingLabels.erase(it, existingLabels.end());
+                }
+            }
+            auto splitWiseLabel = getSplitWiseLabel(t);
+            existingLabels.push_back(splitWiseLabel.name);
+
+            bluecoins_transaction.labels = join(existingLabels, ' ');
+
             bluecoins_transactions.push_back(bluecoins_transaction);
         }
 
@@ -266,16 +291,4 @@ std::ostream &operator<<(std::ostream &os, const Transaction &transaction)
        << "Description: " << transaction.description << "\n"
        << "Amount: " << transaction.amount << "\n";
     return os;
-}
-
-std::vector<std::string> split(const std::string &s, char delimiter)
-{
-    std::vector<std::string> tokens;
-    std::string token;
-    std::istringstream tokenStream(s);
-    while (std::getline(tokenStream, token, delimiter))
-    {
-        tokens.push_back(token);
-    }
-    return tokens;
 }
