@@ -61,9 +61,10 @@ public:
                     // std::cout << "|";
                     int column_count = 0;
                     Transaction t;
+                    t.account = "SBI Technopark";
                     while (std::getline(iss, value, '\t'))
                     {
-                        switch (column_count++)
+                        switch (column_count)
                         {
                         case DATE_COLUMN:
                             t.date = convertToDate(value);
@@ -83,6 +84,7 @@ public:
                         default:
                             break;
                         }
+                        column_count++;
                     }
                     transactions.push_back(t);
                     last_three_lines.pop_front();
